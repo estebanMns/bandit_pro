@@ -1,0 +1,29 @@
+name: bandit_mobile_camera
+description: Usa un teléfono Android o iPhone como cámara bajo demanda de Bandit.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+  flutter: ">=3.24.0"
+
+# Rangos amplios a propósito: fija las versiones exactas con `flutter pub get`, revisa
+# pubspec.lock y súbelo al repositorio una vez probadas en dispositivos físicos.
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_webrtc: ">=0.12.0 <1.0.0"
+  mobile_scanner: ">=5.0.0 <8.0.0"
+  flutter_secure_storage: ">=9.0.0 <11.0.0"
+  http: ">=1.2.0 <2.0.0"
+  web_socket_channel: ">=2.4.0 <4.0.0"
+  permission_handler: ">=11.0.0 <13.0.0"
+  wakelock_plus: ">=1.2.0 <2.0.0"
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ">=4.0.0 <7.0.0"
+
+flutter:
+  uses-material-design: true

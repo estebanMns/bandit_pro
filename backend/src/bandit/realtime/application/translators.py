@@ -4,6 +4,7 @@ from bandit.analysis.public import ActivityEntryResponse, AnalysisActivity
 from bandit.cameras.public import CameraStatusChanged
 from bandit.faces.public import FaceCheckDone, FaceCheckResponse
 from bandit.incidents.public import IncidentChanged, IncidentResponse
+from bandit.mobile_cameras.public import MobileDeviceChanged, MobileSessionChanged, SessionResponse
 from bandit.realtime.application.event_hub import EventHub
 
 
@@ -40,4 +41,16 @@ class LiveEventPublisher:
         self._hub.publish(
             event.check.establishment_id,
             {"type": "face", "check": check.model_dump(mode="json")},
+        )
+
+    async def on_mobile_device(self, event: MobileDeviceChanged) -> None:
+        self._hub.publish(
+            event.establishment_id, {"type": "mobile_camera", "deviceId": str(event.device_id)}
+        )
+
+    async def on_mobile_session(self, event: MobileSessionChanged) -> None:
+        session = SessionResponse.of(event.session)
+        self._hub.publish(
+            event.session.establishment_id,
+            {"type": "mobile_camera_session", "session": session.model_dump(mode="json")},
         )

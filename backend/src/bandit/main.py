@@ -17,6 +17,8 @@ from bandit.faces.api.routes import router as faces_router
 from bandit.identity.api.routes import router as identity_router
 from bandit.identity.api.ws_tickets import WsTickets, parse_origins
 from bandit.incidents.api.routes import router as incidents_router
+from bandit.mobile_cameras.api.routes import router as mobile_cameras_router
+from bandit.mobile_cameras.api.routes import ws_router as mobile_cameras_ws_router
 from bandit.notifications.api.routes import router as notifications_router
 from bandit.places.api.routes import router as places_router
 from bandit.realtime.api.routes import router as realtime_router
@@ -24,6 +26,7 @@ from bandit.shared.config import Settings, get_settings
 from bandit.shared.http import install_error_handlers
 
 CAMERA_SYNC_SECONDS = 60
+MOBILE_SESSION_SWEEP_SECONDS = 30
 
 
 def _build_scheduler(application: Application, settings: Settings) -> AsyncIOScheduler:
@@ -46,6 +49,15 @@ def _build_scheduler(application: Application, settings: Settings) -> AsyncIOSch
         max_instances=1,
         coalesce=True,
     )
+    if application.mobile_cameras.enabled:
+        # Cierra las solicitudes sin respuesta y las sesiones que pasaron su duración máxima.
+        scheduler.add_job(
+            application.mobile_cameras.expire.execute,
+            "interval",
+            seconds=MOBILE_SESSION_SWEEP_SECONDS,
+            max_instances=1,
+            coalesce=True,
+        )
     return scheduler
 
 
@@ -90,6 +102,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.directory = application.directory
     app.state.faces = application.faces
     app.state.places = application.places
+    app.state.mobile_cameras = application.mobile_cameras
+    app.state.mediamtx_auth_secret = resolved.mediamtx_auth_secret
     app.state.event_hub = application.event_hub
     install_error_handlers(app)
     for router in (
@@ -103,6 +117,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         directory_router,
         faces_router,
         places_router,
+        mobile_cameras_router,
+        mobile_cameras_ws_router,
         realtime_router,
     ):
         app.include_router(router)

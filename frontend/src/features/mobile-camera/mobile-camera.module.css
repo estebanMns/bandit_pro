@@ -1,0 +1,165 @@
+.panel {
+  display: grid;
+  gap: var(--e-4);
+  padding: 18px 20px;
+  justify-items: start;
+}
+
+.panel h2 {
+  font-size: var(--t-lg);
+}
+
+.ayuda,
+.tenue {
+  color: var(--texto-tenue);
+}
+
+.tenue {
+  font-size: var(--t-sm);
+}
+
+.aviso {
+  padding: var(--e-2) var(--e-3);
+  border-left: 3px solid var(--sev-alto);
+  background: var(--brillo);
+}
+
+.error {
+  color: var(--error);
+}
+
+.vinculacion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--e-4);
+}
+
+.qr {
+  display: grid;
+  gap: var(--e-2);
+  max-width: 280px;
+  margin: 0;
+}
+
+.qr img,
+.qrVacio {
+  width: 260px;
+  height: 260px;
+  border-radius: var(--radio-panel);
+  background: white;
+}
+
+.opcion {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+}
+
+.dispositivos {
+  display: grid;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dispositivo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-3);
+  padding: var(--e-3) 0;
+  border-bottom: 1px solid var(--borde);
+}
+
+.identidad {
+  display: grid;
+  flex: 1;
+  min-width: 12rem;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+}
+
+.enlace {
+  align-self: center;
+  color: var(--accion);
+}
+
+.estado {
+  padding: 2px var(--e-2);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-control);
+  font-size: var(--t-sm);
+}
+
+.estado[data-estado="available"],
+.estado[data-estado="live"] {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.estado[data-estado="busy"],
+.estado[data-estado="needs_user_action"],
+.estado[data-estado="awaiting_device"],
+.estado[data-estado="connecting"],
+.estado[data-estado="reconnecting"] {
+  border-color: var(--sev-alto);
+  color: var(--sev-alto);
+}
+
+.estado[data-estado="failed"],
+.estado[data-estado="rejected"] {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.sesion {
+  display: grid;
+  gap: var(--e-4);
+}
+
+.reproductor {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  aspect-ratio: 16 / 9;
+  background: black;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.video[data-activo="false"] {
+  visibility: hidden;
+}
+
+.superpuesto {
+  position: absolute;
+  padding: var(--e-4);
+  text-align: center;
+}
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e-3);
+}
+
+.indicador {
+  font-size: var(--t-sm);
+}
+
+.indicador[data-activo="true"]::before {
+  content: "● ";
+  color: var(--baliza);
+}

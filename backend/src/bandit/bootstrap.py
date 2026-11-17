@@ -55,6 +55,16 @@ from bandit.incidents.domain.models import Incident, IncidentChanged, IncidentCo
 from bandit.incidents.infrastructure import tables as incident_tables  # noqa: F401
 from bandit.incidents.infrastructure.db_evidence import DbEvidenceStore
 from bandit.incidents.module import IncidentsModule
+from bandit.mobile_cameras.application.media import MediaSettings
+from bandit.mobile_cameras.domain.models import (
+    MobileDeviceChanged,
+    MobileSessionChanged,
+    SessionLimits,
+)
+from bandit.mobile_cameras.infrastructure import tables as mobile_camera_tables  # noqa: F401
+from bandit.mobile_cameras.infrastructure.fernet_tickets import FernetTicketSigner
+from bandit.mobile_cameras.infrastructure.push import DisabledDevicePush
+from bandit.mobile_cameras.module import MobileCamerasModule
 from bandit.notifications.domain.models import AlertDelivered, AlertFailed
 from bandit.notifications.infrastructure import tables as notification_tables  # noqa: F401
 from bandit.notifications.infrastructure.web_push import VapidPushSender
@@ -70,7 +80,7 @@ from bandit.realtime.application.translators import LiveEventPublisher
 from bandit.shared.background import BackgroundTasks
 from bandit.shared.clock import Clock, SystemClock
 from bandit.shared.config import Settings
-from bandit.shared.db import create_engine, create_session_factory
+from bandit.shared.db import SessionFactory, create_engine, create_session_factory
 from bandit.shared.events import EventBus, InMemoryEventBus
 from bandit.shared.gemini import model_list
 
@@ -87,6 +97,7 @@ class Application:
     directory: DirectoryModule
     faces: FacesModule
     places: PlacesModule
+    mobile_cameras: MobileCamerasModule
     event_hub: EventHub
     background: BackgroundTasks
 
@@ -99,6 +110,63 @@ class _EstablishmentCreator:
 
     async def create(self, name: str, address: str) -> UUID:
         return (await self._establishments.create.execute(name, address)).id
+
+
+class _CameraSources:
+    """Registra el teléfono como una cámara más: el supervisor y el análisis lo leen por RTSP."""
+
+    def __init__(self, cameras: CamerasModule) -> None:
+        self._cameras = cameras
+
+    async def create(self, establishment_id: UUID, name: str, url: str) -> UUID:
+        camera = await self._cameras.register.execute(establishment_id, name, url)
+        # Nace pausada: solo se lee mientras haya una sesión en vivo.
+        await self._cameras.set_enabled.execute(camera.id, False)
+        return camera.id
+
+    async def set_enabled(self, camera_id: UUID, enabled: bool) -> None:
+        await self._cameras.set_enabled.execute(camera_id, enabled)
+
+    async def remove(self, camera_id: UUID) -> None:
+        await self._cameras.remove.execute(camera_id)
+
+
+def _csv(raw: str) -> tuple[str, ...]:
+    return tuple(part.strip() for part in raw.split(",") if part.strip())
+
+
+def _mobile_cameras_module(
+    settings: Settings,
+    sessions: SessionFactory,
+    cameras: CamerasModule,
+    bus: EventBus,
+    clock: Clock,
+) -> MobileCamerasModule:
+    media = MediaSettings(
+        public_webrtc_url=settings.mediamtx_public_webrtc_url,
+        internal_rtsp_url=settings.mediamtx_internal_rtsp_url,
+        internal_user=settings.mediamtx_internal_user,
+        internal_password=settings.mediamtx_internal_password,
+        stun_urls=_csv(settings.webrtc_stun_urls),
+        turn_urls=_csv(settings.webrtc_turn_urls),
+        turn_shared_secret=settings.webrtc_turn_shared_secret,
+        turn_ttl=timedelta(seconds=settings.webrtc_turn_ttl_seconds),
+    )
+    return MobileCamerasModule(
+        sessions,
+        _CameraSources(cameras),
+        FernetTicketSigner(settings.mobile_camera_ticket_key or None),
+        DisabledDevicePush(),
+        media,
+        bus,
+        clock,
+        enabled=settings.mobile_camera_enabled,
+        pairing_ttl=timedelta(seconds=settings.mobile_camera_pairing_ttl_seconds),
+        limits=SessionLimits(
+            answer_window=timedelta(seconds=settings.mobile_camera_answer_seconds),
+            max_duration=timedelta(seconds=settings.mobile_camera_session_ttl_seconds),
+        ),
+    )
 
 
 def _scene_analyzer(settings: Settings) -> SceneAnalyzer:
@@ -218,6 +286,8 @@ def _wire_events(bus: EventBus, app: Application) -> None:
         bus.subscribe(CameraStatusChanged, app.faces.supervisor.on_camera_status)
     bus.subscribe(FaceCheckDone, live.on_face_check)
     bus.subscribe(FaceCheckDone, on_face_check)
+    bus.subscribe(MobileDeviceChanged, live.on_mobile_device)
+    bus.subscribe(MobileSessionChanged, live.on_mobile_session)
 
 
 WANTED_MATCH = "wanted_match"
@@ -317,6 +387,7 @@ def build_application(settings: Settings) -> Application:
             ),
             CachedOsmTiles(str(Path(settings.media_root) / "tiles"), settings.osm_user_agent),
         ),
+        mobile_cameras=_mobile_cameras_module(settings, sessions, cameras, bus, clock),
         event_hub=EventHub(),
         background=BackgroundTasks(),
     )

@@ -7,10 +7,12 @@ from bandit.identity.api.deps import (
     authenticate_websocket,
     require_csrf,
 )
+from bandit.identity.application.throttle import AttemptThrottle
 from bandit.identity.domain.models import Role, User
 
 __all__ = [
     "AdminUser",
+    "AttemptThrottle",
     "CurrentUser",
     "ManagerUser",
     "Role",

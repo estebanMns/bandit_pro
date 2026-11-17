@@ -45,3 +45,18 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/bandit_mobile_camera
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: ./setup.sh
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test

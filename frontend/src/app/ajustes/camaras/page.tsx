@@ -14,6 +14,7 @@ import {
 import { CameraFinder } from "@/features/cameras/CameraFinder";
 import { ImouConnectForm } from "@/features/cameras/ImouConnectForm";
 import { useEstablishment } from "@/features/establishments/useEstablishment";
+import { MobileCamerasPanel } from "@/features/mobile-camera/MobileCamerasPanel";
 import { ApiError } from "@/lib/api";
 import styles from "../ajustes.module.css";
 
@@ -100,6 +101,8 @@ export default function CamerasPage() {
             </form>
           </section>
         )}
+
+        {current && <MobileCamerasPanel establishmentId={current.id} />}
 
         {cameras.length > 0 && (
           <section className={`vidrio ${styles.seccion}`}>

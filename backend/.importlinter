@@ -50,6 +50,7 @@ containers =
     bandit.realtime
     bandit.places
     bandit.faces
+    bandit.mobile_cameras
 layers =
     (api)
     (infrastructure)
@@ -68,3 +69,16 @@ forbidden_modules =
     bandit.cameras
     bandit.incidents
     bandit.directory
+
+# Las cámaras móviles entran al flujo de video por un puerto: bootstrap las conecta.
+[importlinter:contract:moviles-por-puerto]
+name = Las camaras moviles no conocen el video ni el directorio por dentro
+type = forbidden
+source_modules =
+    bandit.mobile_cameras
+forbidden_modules =
+    bandit.cameras
+    bandit.analysis
+    bandit.incidents
+    bandit.directory
+    bandit.faces

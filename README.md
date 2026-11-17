@@ -315,6 +315,18 @@ y la galería de los más buscados con el estado de la última extracción. El f
 vive en memoria. La extracción corre sola al arrancar y cada 10 minutos, y un dueño puede pedir una
 manual cada 5 minutos.
 
+### Cámaras móviles (Bandit Mobile Camera)
+
+Un teléfono Android o iPhone puede servir de cámara bajo demanda: se vincula con un QR temporal
+desde **Ajustes › Cámaras › Cámaras móviles**, y solo transmite cuando alguien acepta la solicitud
+en su pantalla. El video viaja por WebRTC a MediaMTX y, si el dueño activa el análisis, entra al
+mismo flujo de cámaras y Gemini. Nada se graba. Está apagado por defecto
+(`MOBILE_CAMERA_ENABLED=false`) y MediaMTX solo arranca con `docker compose --profile mobile up -d`.
+
+Especificación: [`docs/BANDIT_MOBILE_CAMERA.md`](docs/BANDIT_MOBILE_CAMERA.md). Estado, decisiones
+y despliegue: [`docs/BANDIT_MOBILE_CAMERA_IMPLEMENTACION.md`](docs/BANDIT_MOBILE_CAMERA_IMPLEMENTACION.md).
+App Flutter: [`mobile/bandit_mobile_camera`](mobile/bandit_mobile_camera).
+
 ## Arquitectura
 
 Monolito modular: un solo backend desplegable, con módulos de fronteras verificadas.
@@ -330,6 +342,7 @@ backend/src/bandit/
   directory/      agente de extracción y consulta del directorio
   notifications/  WhatsApp y Web Push
   realtime/       WebSocket de eventos
+  mobile_cameras/ teléfonos vinculados, sesiones bajo demanda y autorización de MediaMTX
   bootstrap.py    raíz de composición
 frontend/src/
   app/            rutas de Next.js
@@ -346,7 +359,7 @@ eventos, y `bootstrap.py` los conecta.
 |---|---|
 | SOLID y POO | Puertos en `*/domain/ports.py`, casos de uso en `*/application/`, adaptadores en `*/infrastructure/` |
 | Event loop | `cameras/application/supervisor.py`, `analysis/application/camera_analysis.py` |
-| WebSocket | `/ws/video/{camera_id}` y `/ws/events/{establishment_id}` |
+| WebSocket | `/ws/video/{camera_id}`, `/ws/events/{establishment_id}` y `/ws/mobile-cameras/device` |
 | Fan-out | `shared/fanout.py`, `shared/events.py`, `features/live/events.shared-worker.ts` |
 | Web Worker | `features/video/video.worker.ts` |
 | SharedArrayBuffer | `features/video/frameRing.ts` |

@@ -86,6 +86,28 @@ class Settings(BaseSettings):
     imou_app_secret: str = ""
     imou_api_url: str = "https://openapi-or.easy4ip.com/openapi"
 
+    # Bandit Mobile Camera: teléfonos Android e iPhone como cámaras bajo demanda.
+    mobile_camera_enabled: bool = False
+    mobile_camera_pairing_ttl_seconds: int = Field(default=300, ge=60, le=900)
+    # Tiempo para aceptar en el teléfono y duración máxima de una sesión.
+    mobile_camera_answer_seconds: int = Field(default=90, ge=15, le=600)
+    mobile_camera_session_ttl_seconds: int = Field(default=900, ge=60, le=4 * 3600)
+    # Clave Fernet de los tickets multimedia. Vacía = una por proceso (con un solo backend).
+    mobile_camera_ticket_key: str = ""
+    # WebRTC / ICE. Varias URL separadas por coma.
+    webrtc_stun_urls: str = ""
+    webrtc_turn_urls: str = ""
+    # Secreto compartido con coturn (`use-auth-secret`): credenciales TURN que caducan.
+    webrtc_turn_shared_secret: str = ""
+    webrtc_turn_ttl_seconds: int = Field(default=3600, ge=60)
+    # MediaMTX: URL pública de WebRTC (WHIP/WHEP), base RTSP interna para el análisis y el
+    # secreto con el que MediaMTX consulta /api/mobile-cameras/media-auth.
+    mediamtx_public_webrtc_url: str = ""
+    mediamtx_internal_rtsp_url: str = "rtsp://mediamtx:8554"
+    mediamtx_internal_user: str = "bandit-interno"
+    mediamtx_internal_password: str = ""
+    mediamtx_auth_secret: str = ""
+
     # OpenStreetMap: geocodificación, CAI cercanos y mosaicos del mapa. Sus políticas de uso
     # piden un User-Agent que identifique la aplicación.
     osm_user_agent: str = "Bandit/1.0 (vigilancia para bares y restaurantes)"

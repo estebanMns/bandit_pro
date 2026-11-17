@@ -1,0 +1,57 @@
+# MediaMTX para Bandit Mobile Camera.
+# Los teléfonos publican por WebRTC (WHIP), el dashboard lee por WebRTC (WHEP) y el supervisor de
+# cámaras de Bandit lee por RTSP dentro de la red de Docker. Cada publicación o lectura se
+# autoriza contra el backend (/api/mobile-cameras/media-auth) con tickets temporales.
+#
+# Valores secretos y dependientes del despliegue NO van aquí: llegan por variables MTX_* desde
+# docker-compose.yml (por ejemplo MTX_AUTHHTTPADDRESS y MTX_WEBRTCADDITIONALHOSTS).
+# Escrito para MediaMTX 1.19; revisa las claves si cambias de versión.
+
+logLevel: info
+
+# Solo lo necesario. Sin API, métricas, grabación ni reproducción.
+api: no
+metrics: no
+pprof: no
+playback: no
+rtmp: no
+hls: no
+srt: no
+
+# RTSP solo dentro de la red de Docker (no se publica el puerto 8554 en el host).
+rtsp: yes
+rtspTransports: [tcp]
+rtspAddress: :8554
+
+# WebRTC: WHIP para publicar y WHEP para leer. Caddy expone :8889 bajo /media.
+webrtc: yes
+webrtcAddress: :8889
+webrtcEncryption: no
+# Detrás de Caddy el dashboard y WHEP comparten origen. Si el dashboard vive en otro dominio,
+# revisa la clave de Allow-Origin de WebRTC de tu versión de MediaMTX (su nombre cambió entre
+# versiones y MediaMTX no arranca con claves desconocidas).
+# Medios por UDP (y TCP de respaldo). Estos puertos sí se publican en el host.
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+# IP o dominio público del servidor: MTX_WEBRTCADDITIONALHOSTS.
+webrtcAdditionalHosts: []
+# STUN/TURN del lado del servidor: MTX_WEBRTCICESERVERS2_0_URL, etc. Ver deploy/README.
+
+# Toda autorización la decide el backend.
+authMethod: http
+authHTTPAddress: http://backend:8000/api/mobile-cameras/media-auth?key=CAMBIAR
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+pathDefaults:
+  # Nada se graba: el audio y el video solo pasan en vivo.
+  record: no
+  # Un teléfono que reconecta reemplaza su propia publicación anterior.
+  overridePublisher: yes
+
+paths:
+  # Solo existen las rutas de teléfonos; el nombre exacto lo decide el backend.
+  '~^mobile/[0-9a-f]{32}$':
+    source: publisher
